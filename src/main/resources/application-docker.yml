@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/auth_db
+    username: auth_user
+    password: auth_pass
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 900000
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID}
+
+eureka:
+  client:
+    enabled: false

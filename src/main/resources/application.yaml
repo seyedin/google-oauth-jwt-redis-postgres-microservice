@@ -1,0 +1,57 @@
+server:
+  port: 8081
+  # Port number for Auth service
+
+spring:
+  application:
+    name: AUTH
+    # Service name for Eureka registration
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db
+    # Database connection URL
+    # Use "localhost" when running from IntelliJ (outside Docker)
+    # Use "postgres" when running inside Docker network (service name in docker-compose)
+    # url: jdbc:postgresql://localhost:5432/auth_db
+    username: auth_user
+    # Database username
+    password: auth_pass
+    # Database password
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      # Auto create or update tables
+    show-sql: true
+    # Show SQL queries in logs
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Use PostgreSQL dialect
+
+#  Redis configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+
+jwt:
+  secret: mySuperStrongJwtSecretKeyForPricewise123456
+  expiration: 3600000
+
+google:
+  client-id: 488895601128-d82nl1jjgktg72g5q3m1d003afbt5aho.apps.googleusercontent.com
+
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka
+#      # Eureka server URL
+#
+#  instance:
+#    leaseRenewalIntervalInSeconds: 30
+#    # Heartbeat interval in seconds, Service sends a renewal every 30 seconds to Eureka
+#    leaseExpirationDurationInSeconds: 90
+#    # Expiration duration in seconds, If no heartbeat is received within 90 seconds, Eureka removes the service

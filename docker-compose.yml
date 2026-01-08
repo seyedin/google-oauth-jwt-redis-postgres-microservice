@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "no"]
+
+  auth-service:
+    build:
+      context: .              # یعنی همین فولدر auth/
+      dockerfile: Dockerfile  # اگر اسمش Dockerfile است
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: "CHANGE_ME_TO_LONG_SECRET"
+      GOOGLE_CLIENT_ID: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+
+  auth-web:
+    build:
+      context: ./auth-web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
