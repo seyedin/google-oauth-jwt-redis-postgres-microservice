@@ -1,5 +1,7 @@
 package com.auth.dto;
 
+import java.util.List;
+
 /**
  * This record is the profile of user.
  * It is sent to the client.
@@ -7,5 +9,5 @@ package com.auth.dto;
 public record UserProfileDto(
         Long id,
         String username,
-        String role
+        List<String> roles
 ) { }

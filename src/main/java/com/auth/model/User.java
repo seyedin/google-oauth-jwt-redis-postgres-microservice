@@ -13,7 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class is the user in database.
@@ -84,10 +86,13 @@ public class User implements UserDetails {
     /**
      * This is the role of user.
      */
-    @NotNull(message = "Role must not be null")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     /**
      * This is the time when user is created.
@@ -107,9 +112,6 @@ public class User implements UserDetails {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (role == null) {
-            role = Role.ROLE_USER;
-        }
         if (provider == null || provider.isBlank()) {
             provider = "LOCAL";
         }
@@ -125,7 +127,9 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .toList();
     }
 
     @Override

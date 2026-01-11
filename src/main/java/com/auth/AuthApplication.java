@@ -15,5 +15,4 @@ public class AuthApplication {
 		log.info("\n The Spring Boot Application is now up and running on port 8081! ");
 		log.info("\n Enjoy exploring your API! ");
 	}
-
 }

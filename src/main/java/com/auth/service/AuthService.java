@@ -6,6 +6,7 @@ import com.auth.model.RefreshToken;
 import com.auth.model.Role;
 import com.auth.model.User;
 import com.auth.repository.RefreshTokenRepository;
+import com.auth.repository.RoleRepository;
 import com.auth.repository.UserRepository;
 import com.auth.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +21,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class has the auth business logic.
@@ -33,6 +32,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -47,10 +47,9 @@ public class AuthService {
      *
      * @param username the username
      * @param password the password
-     * @param isAdmin  true when user must be admin
      * @return auth response with token
      */
-    public AuthResponseDto signup(String username, String password, boolean isAdmin) {
+    public AuthResponseDto signup(String username, String password, String roleName) {
 
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Username must not be blank");
@@ -66,16 +65,23 @@ public class AuthService {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
 
+        if (roleName == null || roleName.isBlank()) {
+            throw new IllegalArgumentException("Role must not be blank");
+        }
+
         if (userRepository.existsByUsername(username)) {
             log.warn("Signup failed. Username already used: {}", username);
             throw new IllegalStateException("Username is already used");
         }
 
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException(roleName + " not found"));
+
         User user = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
-                .role(isAdmin ? Role.ROLE_ADMIN : Role.ROLE_USER)
                 .provider("LOCAL")
+                .roles(Set.of(role))
                 .build();
 
         user = userRepository.save(user);
@@ -95,12 +101,7 @@ public class AuthService {
      * @return auth response with token
      */
     public AuthResponseDto signup(SignupRequestDto request) {
-        AuthResponseDto response = signup(
-                request.username(),
-                request.password(),
-                false
-        );
-        return response;
+        return signup(request.username(), request.password(), request.role());
     }
 
     /**
@@ -252,20 +253,23 @@ public class AuthService {
      * It sets username = email.
      * It sets provider = GOOGLE.
      * It makes random password (strong).
-     * It hash password.
+     * It hashes password.
      */
     private User createGoogleUser(GoogleUserInfoDto googleUser) {
 
         String randomPassword = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new IllegalStateException("ROLE_USER not found"));
+
         User newUser = User.builder()
                 .username(googleUser.email())
                 .email(googleUser.email())
                 .password(encodedPassword)
-                .role(Role.ROLE_USER)
                 .provider("GOOGLE")
                 .providerId(googleUser.sub())
+                .roles(Set.of(userRole))
                 .build();
 
         return userRepository.save(newUser);
@@ -293,17 +297,17 @@ public class AuthService {
         return password.toString();
     }
 
-    /**
-     * This method returns current user profile.
-     *
-     * @param user the user
-     * @return profile data
-     */
+
     public UserProfileDto me(User user) {
+        List<String> roles = user.getRoles().stream()
+                .map(Role::getName)
+                .toList();
+
         return new UserProfileDto(
                 user.getId(),
                 user.getUsername(),
-                user.getRole().name()
+                roles
         );
     }
+
 }

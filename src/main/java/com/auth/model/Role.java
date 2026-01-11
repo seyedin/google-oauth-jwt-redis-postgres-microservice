@@ -1,10 +1,24 @@
 package com.auth.model;
 
-/**
- * This enum is the role of the user.
- * It shows what the user can do.
- */
-public enum Role {
-    ROLE_USER,
-    ROLE_ADMIN
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "roles")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Role {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /**
+     * Example: ROLE_ADMIN, ROLE_USER
+     */
+    @Column(nullable = false, unique = true, length = 50)
+    private String name;
 }
